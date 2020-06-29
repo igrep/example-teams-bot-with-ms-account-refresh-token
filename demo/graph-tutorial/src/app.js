@@ -66,6 +66,7 @@ async function signInComplete(iss, sub, profile, accessToken, refreshToken, para
             // Add properties to profile
             profile['email'] = user.mail ? user.mail : user.userPrincipalName;
         }
+        console.log(JSON.stringify(user));
     } catch (err) {
         return done(err);
     }
