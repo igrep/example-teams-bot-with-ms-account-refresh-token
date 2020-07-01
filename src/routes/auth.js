@@ -14,7 +14,7 @@ router.get('/signin',
                 prompt: 'login',
                 failureRedirect: '/',
                 failureFlash: true,
-                successRedirect: '/'
+                successRedirect: '/auth/success'
             }
         )(req,res,next);
     }
@@ -28,7 +28,7 @@ router.post('/callback',
                 response: res,
                 failureRedirect: '/',
                 failureFlash: true,
-                successRedirect: '/'
+                successRedirect: '/auth/success'
             }
         )(req,res,next);
     }
@@ -41,6 +41,12 @@ router.get('/signout',
             req.logout();
             res.redirect('/');
         });
+    }
+);
+
+router.get('/success',
+    function(_req, res) {
+        res.render('success');
     }
 );
 

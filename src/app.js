@@ -9,8 +9,11 @@ var logger = require('morgan');
 var session = require('express-session');
 var flash = require('connect-flash');
 
-const { BotFrameworkAdapter } = require('botbuilder');
 const { EchoBot } = require('./bot');
+const { saveTokens } = require('./signedInConversations');
+const { BotAdapter } = require('./botAdapter');
+const { Oauth2Client } = require('./oauth2Client');
+const { greetSignedInUserInBackGround, notifyLaterInBackground } = require('./backgroundNotifier');
 
 require('dotenv').config();
 
@@ -27,52 +30,43 @@ var users = {};
 // Passport calls serializeUser and deserializeUser to
 // manage users
 passport.serializeUser(function(user, done) {
+    console.log("Serializing user: ", user);
     // Use the OID property of the user as a key
     users[user.profile.oid] = user;
     done (null, user.profile.oid);
 });
 
 passport.deserializeUser(function(id, done) {
+    console.log("Deserializing user: ", { id });
     done(null, users[id]);
 });
-
-// <ConfigureOAuth2Snippet>
-// Configure simple-oauth2
-const oauth2 = require('simple-oauth2').create({
-    client: {
-        id: process.env.OAUTH_APP_ID,
-        secret: process.env.OAUTH_APP_PASSWORD
-    },
-    auth: {
-        tokenHost: process.env.OAUTH_AUTHORITY,
-        authorizePath: process.env.OAUTH_AUTHORIZE_ENDPOINT,
-        tokenPath: process.env.OAUTH_TOKEN_ENDPOINT
-    }
-});
-// </ConfigureOAuth2Snippet>
 
 // Callback function called once the sign-in is complete
 // and an access token has been obtained
 // <SignInCompleteSnippet>
-async function signInComplete(iss, sub, profile, accessToken, refreshToken, params, done) {
+async function signInComplete(_iss, _sub, profile, accessToken, _refreshToken, params, done) {
     if (!profile.oid) {
         return done(new Error("No OID found in user profile."));
     }
 
     try{
-        const user = await graph.getUserDetails(accessToken);
+        const user = await graph.getUserDetails(graph.getClientWithAccessToken(accessToken));
 
         if (user) {
             // Add properties to profile
             profile['email'] = user.mail ? user.mail : user.userPrincipalName;
+            saveTokens(user, params);
+            greetSignedInUserInBackGround(profile.oid);
+            notifyLaterInBackground(profile.oid);
         }
-        console.log(JSON.stringify(user));
     } catch (err) {
         return done(err);
     }
 
     // Create a simple-oauth2 token from raw tokens
-    let oauthToken = oauth2.accessToken.create(params);
+    const oauthToken = Oauth2Client.createToken(params);
+
+    console.log("signedInComplete", { params, profile });
 
     // Save the profile and tokens in user storage
     users[profile.oid] = { profile, oauthToken };
@@ -98,9 +92,7 @@ passport.use(new OIDCStrategy(
 ));
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
-var calendarRouter = require('./routes/calendar');
 var graph = require('./graph');
 
 var app = express();
@@ -172,24 +164,13 @@ app.use(function(req, res, next) {
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
-app.use('/calendar', calendarRouter);
-app.use('/users', usersRouter);
-
-// Create adapter.
-// See https://aka.ms/about-bot-adapter to learn more about how bots work.
-const adapter = new BotFrameworkAdapter({
-    appId: process.env.MicrosoftAppId,
-    appPassword: process.env.MicrosoftAppPassword,
-    // channelService: process.env.ChannelService,
-    // openIdMetadata: process.env.BotOpenIdMetadata
-});
 
 // Catch-all for errors.
-adapter.onTurnError = async (context, error) => {
+BotAdapter.onTurnError = async (context, error) => {
     // This check writes out errors to console log .vs. app insights.
     // NOTE: In production environment, you should consider logging this to Azure
     //       application insights.
-    console.error(`\n [onTurnError] unhandled error: ${ error }`);
+    console.error("\n [onTurnError] unhandled error:", error);
 
     // Send a trace activity, which will be displayed in Bot Framework Emulator
     await context.sendTraceActivity(
@@ -209,7 +190,7 @@ const myBot = new EchoBot();
 
 // Listen for incoming requests.
 app.post('/api/messages', (req, res) => {
-    adapter.processActivity(req, res, async (context) => {
+    BotAdapter.processActivity(req, res, async (context) => {
         // Route to main dialog.
         await myBot.run(context);
     });
