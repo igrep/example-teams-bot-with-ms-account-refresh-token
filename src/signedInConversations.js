@@ -30,14 +30,9 @@ async function refreshAndGetAccessToken(signedInConversation){
     let tokens = Oauth2Client.createToken(signedInConversation.tokens);
     if (tokens.expired()){
         console.log(`User#${aadObjectId}'s access token has been expired. Refreshing.`);
-        try {
-            tokens = await tokens.refresh({
-                scope: process.env.OAUTH_SCOPES
-            });
-        } catch (error) {
-            console.log('Error refreshing access token: ', error);
-            return null;
-        }
+        tokens = await tokens.refresh({
+            scope: process.env.OAUTH_SCOPES
+        });
     }
     signedInConversation.tokens = tokens.toJSON();
     console.log(`FINISHED Updating the access token of user#${aadObjectId}.`, signedInConversation);
