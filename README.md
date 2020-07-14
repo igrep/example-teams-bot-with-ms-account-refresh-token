@@ -32,6 +32,21 @@ To implement "Sign-in with Microsoft account" feature without `OAuthPrompt`, I c
 
 ## Caveat
 
+### When applying the method in this example in your production
+
+When copying this example to create an app in your production, perhaps you would save the tokens object
+returned by the IdP (i.e. [the "Token response" described in this document](https://github.com/lelylan/simple-oauth2/issues/225))
+in some database.
+In that case, you have to **save the time when you get the tokens object** along with the tokens object.
+Because the tokens object returned by Microsoft doesn't contain either `expires_at` or `created_at`,
+but only `expires_in`, so [the access-token-parser of simple-oauth2](https://github.com/lelylan/simple-oauth2/blob/94da9f7236ace277410ec7ed8260ff30f9f0e52e/lib/access-token-parser.js)
+can't tell when is the actual expiration time of the token.  
+Otherwise `AccessToken.prototype.expired()` always returns `false`, then the access token wouldn't be updated forever.
+
+Related issue: [Calculated expires_at ignores created_at · Issue #225 · lelylan/simple-oauth2](https://github.com/lelylan/simple-oauth2/issues/225)
+
+### Limitation of the method
+
 This example doesn't work in the following cases:
 
 - The bot joins in a chat with several people: This bot only supports 1-to-1 chats.

@@ -28,6 +28,8 @@ async function refreshAndGetAccessToken(signedInConversation){
     console.log(`Checking if I have to refresh the access token of user#${aadObjectId}.`);
 
     let tokens = Oauth2Client.createToken(signedInConversation.tokens);
+    // WARN: You should NOT use `expired()` when saving the `tokens` in your storage.
+    //       See README of this project for details.
     if (tokens.expired()){
         console.log(`User#${aadObjectId}'s access token has been expired. Refreshing.`);
         tokens = await tokens.refresh({
