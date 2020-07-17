@@ -53,6 +53,9 @@ This example doesn't work in the following cases:
 - There are several 1-1 chats where the bot and the signed-in user join.
     - (I'm not sure we can actually have such chats).
 
+# Another idea which flashed into my mind after creating this repository
+
+[As commented in the question refrerred in the begginning](https://stackoverflow.com/questions/62441914/get-refresh-tokens-of-microsoft-graph-api-with-oauthprompt/62947673#comment111321661_62947673), running a dialog including `OAuthPrompt` in a `TurnContext` made with a `ConversationRefrence`, which is saved and passed to the background thread, may work. (But I have no time and no motive to try!)
 
 # Original License
 
