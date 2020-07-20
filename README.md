@@ -2,6 +2,8 @@
 
 One solution for [botframework - Get refresh tokens of Microsoft Graph API with OAuthPrompt - Stack Overflow](https://stackoverflow.com/questions/62441914/get-refresh-tokens-of-microsoft-graph-api-with-oauthprompt).
 
+**NOTE:** I've already found another, perhaps more sophisticated solution (but not tried!). See [this answer added by myself](https://stackoverflow.com/a/62669632/4299824).
+
 ## The problem
 
 To make a Microsoft Teams bot which uses the Microsoft account of the peer (the user who talks with the bot), we usually use [`OAuthPrompt` class of the botbuilder-dialogs library](https://docs.microsoft.com/en-us/javascript/api/botbuilder-dialogs/oauthprompt?view=botbuilder-ts-latest). This class makes it very easy to implement a "Sign-in with Microsoft account" feature. But this is too inflexible to customize: almost any process for OAuth2-related tasks are done on Teams itself.
@@ -55,7 +57,8 @@ This example doesn't work in the following cases:
 
 # Another idea which flashed into my mind after creating this repository
 
-[As commented in the question refrerred in the begginning](https://stackoverflow.com/questions/62441914/get-refresh-tokens-of-microsoft-graph-api-with-oauthprompt/62947673#comment111321661_62947673), running a dialog including `OAuthPrompt` in a `TurnContext` made with a `ConversationRefrence`, which is saved and passed to the background thread, may work. (But I have no time and no motive to try!)
+[As answered in the question refrerred in the begginning](https://stackoverflow.com/a/62952408/4299824), running a dialog including `OAuthPrompt` in a `TurnContext` made with a `ConversationRefrence`, which is saved and passed to the background thread, may work.  
+But I have no time and no motive to try! I don't like botbuilder-dialogs!
 
 # Original License
 
